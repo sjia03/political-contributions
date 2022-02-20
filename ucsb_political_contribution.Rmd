@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Introduction
+
+In this notebook, I will be analyzing the political contributions of UCSB professors.
+
+## Data Reading and Preprocessing
+
+```{r}
+setwd('/Users/stellajia/Desktop/UCSB/Extracurriculars/Daily_Nexus/political_contributions/')
+library("tidyverse")
+library("lubridate")
+data <- read.csv("ucsb_professors.csv")
+```
+
+```{r}
+library("scales")
+```
+
+```{r}
+head(data, 5)
+```
+
+```{r}
+# keep relevant columns
+keep <- c("committee_id", "committee_name", "report_year", "contributor_name", "contribution_receipt_amount", "contribution_receipt_date")
+df = data[keep]
+head(df, 5)
+```
+
+```{r}
+# remove time from string and convert from 'chr' to 'date' type
+df$contribution_receipt_date <- as.Date((gsub(" 00:00:00", "", df$contribution_receipt_date)), "%Y-%m-%d")
+df
+```
+
+### Column Information
+
+-   committee_id: unique ID given to a political organization/committee
+-   committee_name: name of political organization/committee
+-   report_year: year that individual donated to a certain committee
+-   contributor_name: name of contributor who donated
+-   contribution_receipt_amount: amount of money the contributor donated to a certain committee
+
+## Distribution of Donations
+
+```{r}
+# create new dataframe which groups all contributions made on SAME date 
+
+df %>% 
+  group_by(contribution_receipt_date) %>% 
+  summarise(daily_contribution = sum(contribution_receipt_amount)) %>% 
+  filter(daily_contribution > 0) %>% 
+  ggplot(aes(x=contribution_receipt_date, y=daily_contribution)) +
+    geom_bar(stat = "identity") + #tells ggplot that you're providing y values
+    labs(x = "Month", y = "Amount Contributed") 
+    #scale_x_date(labels = date_format("%m-%Y")) +
+    #annotate(geom="text", x = parse_date_time("11/8/2016", "%m/%d/%Y %H:%M"), y = 5, label="2016 Presidential Election,", hjust=0.5)
+```
+
+```{r}
+# create bigger bin widths so group by week?
+df %>% 
+  group_by(contribution_receipt_date) %>% 
+  summarise(daily_contribution = sum(contribution_receipt_amount)) %>% 
+  filter(daily_contribution > 0) %>% 
+  
+  mutate(week = cut.Date(contribution_receipt_date, breaks = "1 week", labels = FALSE)) %>% 
+  # could be working with diff date objects after cut.Date
+  arrange(contribution_receipt_date) %>% 
+  group_by(week) %>% 
+  summarise(weekly_contribution = sum(daily_contribution)) %>% 
+  
+  ggplot(aes(x=week, y=weekly_contribution)) +
+    geom_bar(stat = "identity") + 
+    labs(x = "Week", y = "Amount Contributed") 
+    scale_x_time(
+      breaks=parse_date_time(c("2015-1-1", "2021-8-15", "2021-9-1", "2021-9-15", "2021-12-15"), "%Y-%m-%d"),
+      labels=c("Jan. 1, 2015", "Aug. 15", "Aug. 31", "Sept. 15", "Dec. 15, 2021")
+    )
+```
+
+## Money Per Organization
+
+```{r}
+df %>% 
+  group_by(committee_name) %>% 
+  summarise(total_contribution = sum(contribution_receipt_amount)) %>% 
+  arrange(desc(total_contribution)) %>% 
+  top_n(10) %>% 
+  
+  ggplot(aes(x=committee_name, y=total_contribution)) +
+    geom_bar(stat="identity") +
+    labs(x = "Organization", y = "Total Contributed") +
+    scale_x_discrete(label=abbreviate)
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# consider splitting by year
+```
+
+## Biggest Donors
+
+should i show the name of the biggest donor?
+
+-   look at department they are from
+
+-   look at range of donations
+
+next tasks:
+
+-   consider comparing diff professions, zip codes, report_types
+
+-   remove professions search and compare professors to rest of the zip codes
