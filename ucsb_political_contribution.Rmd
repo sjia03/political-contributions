@@ -103,17 +103,3 @@ df %>%
 
 # consider splitting by year
 ```
-
-## Biggest Donors
-
-should i show the name of the biggest donor?
-
--   look at department they are from
-
--   look at range of donations
-
-next tasks:
-
--   consider comparing diff professions, zip codes, report_types
-
--   remove professions search and compare professors to rest of the zip codes
