@@ -65,7 +65,7 @@ df %>%
 ```
 
 ```{r}
-# create bigger bin widths so group by week?
+
 df %>% 
   group_by(contribution_receipt_date) %>% 
   summarise(daily_contribution = sum(contribution_receipt_amount)) %>% 
